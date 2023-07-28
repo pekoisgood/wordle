@@ -3,6 +3,7 @@
 import Row from "./Row";
 import { useReducer, useEffect } from "react";
 interface Words {
+  gameStatus: GameStatus;
   wordsList: string[][];
   wordsStatusList: WordStatus[][];
 }
@@ -15,7 +16,12 @@ enum WordStatus {
   TYPING,
 }
 
-type ActionType = "SET_KEY_PRESS" | "REMOVE_KEY";
+type ActionType =
+  | "SET_KEY_PRESS"
+  | "REMOVE_KEY"
+  | "SET_GAME_STATUS_WIN"
+  | "SET_NEW_GAME";
+type GameStatus = "PENDING" | "WIN" | "LOSE";
 
 interface Action {
   type: ActionType;
@@ -24,8 +30,65 @@ interface Action {
   payload?: string;
 }
 
+const initialState: Words = {
+  gameStatus: "PENDING",
+  wordsList: [
+    ["", "", "", "", ""],
+    ["", "", "", "", ""],
+    ["", "", "", "", ""],
+    ["", "", "", "", ""],
+    ["", "", "", "", ""],
+    ["", "", "", "", ""],
+  ],
+  wordsStatusList: [
+    [
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+    ],
+    [
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+    ],
+    [
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+    ],
+    [
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+    ],
+    [
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+    ],
+    [
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+      WordStatus.EMPTY,
+    ],
+  ],
+};
+
 function reducer(state: Words, action: Action): Words {
   const newState = { ...state };
+
   // find the first array contains "" (empty string)
   const currentArr = state.wordsList.find((arr) => arr.includes(""));
   const currentArrIndex = currentArr && state.wordsList.indexOf(currentArr);
@@ -45,6 +108,18 @@ function reducer(state: Words, action: Action): Words {
     wordIndex: number
   ) {
     state.wordsStatusList[arrIndex][wordIndex] = status;
+  }
+
+  function isWordsListStillProcessing() {
+    let status;
+    state.wordsStatusList.forEach((wordArr) => {
+      if (wordArr.includes(WordStatus.EMPTY)) {
+        status = true;
+        return;
+      }
+      status = false;
+    });
+    return status;
   }
 
   function updateWord(payload: string) {
@@ -68,6 +143,11 @@ function reducer(state: Words, action: Action): Words {
             : updateWordStatus(WordStatus.INCORRECT, arrIndex, wordIndex);
         });
       });
+
+      if (!isWordsListStillProcessing()) {
+        newState.gameStatus = "LOSE";
+      }
+
       return newState;
     }
 
@@ -90,6 +170,7 @@ function reducer(state: Words, action: Action): Words {
       if (action.payload !== undefined) {
         updateWord(action.payload);
       }
+
       return newState;
     case "REMOVE_KEY":
       if (isCurentIndexValid) {
@@ -109,67 +190,17 @@ function reducer(state: Words, action: Action): Words {
         state.wordsStatusList[5][4] = WordStatus.EMPTY;
       }
       return newState;
+    case "SET_GAME_STATUS_WIN":
+      newState.gameStatus = "WIN";
+      return newState;
+
     default:
-      return state;
+      return newState;
   }
 }
 
 const answer = ["R", "U", "L", "E", "R"];
 export default function Home(): JSX.Element {
-  const initialState: Words = {
-    wordsList: [
-      ["", "", "", "", ""],
-      ["", "", "", "", ""],
-      ["", "", "", "", ""],
-      ["", "", "", "", ""],
-      ["", "", "", "", ""],
-      ["", "", "", "", ""],
-    ],
-    wordsStatusList: [
-      [
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-      ],
-      [
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-      ],
-      [
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-      ],
-      [
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-      ],
-      [
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-      ],
-      [
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-        WordStatus.EMPTY,
-      ],
-    ],
-  };
   const [state, dispatch] = useReducer(reducer, initialState);
 
   function handleKeyEvent(e: KeyboardEvent) {
@@ -186,6 +217,14 @@ export default function Home(): JSX.Element {
         wordsList: state.wordsList,
         wordsStatusList: state.wordsStatusList,
         payload: e.key.toUpperCase(),
+      });
+      state.wordsList.forEach((wordArr) => {
+        if (wordArr.join("") === answer.join(""))
+          dispatch({
+            type: "SET_GAME_STATUS_WIN",
+            wordsList: state.wordsList,
+            wordsStatusList: state.wordsStatusList,
+          });
       });
     }
 
@@ -229,12 +268,28 @@ export default function Home(): JSX.Element {
   }
 
   useEffect(() => {
-    window.addEventListener("keypress", (e) => handleKeyEvent(e));
-    window.addEventListener("keydown", (e) => handleKeyDelete(e));
-  }, []);
+    if (state.gameStatus === "WIN") {
+      window.removeEventListener("keypress", handleKeyEvent);
+      return;
+    }
+
+    window.addEventListener("keypress", handleKeyEvent);
+    window.addEventListener("keydown", handleKeyDelete);
+
+    return () => {
+      window.removeEventListener("keypress", handleKeyEvent);
+      window.removeEventListener("keydown", handleKeyDelete);
+    };
+  }, [state.gameStatus]);
+
+  console.log("init", initialState);
 
   return (
     <main className="flex flex-col items-center justify-center gap-y-2 h-screen font-nyt-franklin ">
+      <h1 className="text-[25px] font-bold tracking-[2px] text-center">
+        Wordle
+      </h1>
+      <p>Take a guess!</p>
       {state.wordsList.map((_, index: number) => {
         return (
           <Row
@@ -244,6 +299,15 @@ export default function Home(): JSX.Element {
           />
         );
       })}
+      {state.gameStatus !== "PENDING" && (
+        <div className="w-screen h-screen fixed bg-black/30 flex justify-center items-center">
+          <div className="flex flex-col gap-5 items-center justify-center bg-white w-[50%] h-[50%] min-h-[300px] text-center p-10 rounded-2xl shadow-sm">
+            {state.gameStatus === "LOSE" && (
+              <p className="font-bold text-[30px]">Game Over</p>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
