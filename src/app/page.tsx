@@ -299,12 +299,13 @@ export default function Home(): JSX.Element {
           />
         );
       })}
-      {state.gameStatus !== "PENDING" && (
+      {state.gameStatus === "WIN" && (
+        <p className="font-bold text-[30px] text-correct">YOU WIN !!!</p>
+      )}
+      {state.gameStatus === "LOSE" && (
         <div className="w-screen h-screen fixed bg-black/30 flex justify-center items-center">
           <div className="flex flex-col gap-5 items-center justify-center bg-white w-[50%] h-[50%] min-h-[300px] text-center p-10 rounded-2xl shadow-sm">
-            {state.gameStatus === "LOSE" && (
-              <p className="font-bold text-[30px]">Game Over</p>
-            )}
+            <p className="font-bold text-[30px]">Game Over</p>
           </div>
         </div>
       )}
