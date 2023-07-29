@@ -1,9 +1,19 @@
 # wordle
 
-A challenging and fun word guessing game, where users get 6 chances to guess a 5-letter word.
+* [Intro](#intro)
+* [Link](#link)
+* [Tech](#tech)
+* [Demo](#demo)
 
 
-## Technologies
+## Intro
+An exciting Wordle clone word-guessing website that offers users a thrilling and enjoyable word puzzle experience. With 6 attempts to decipher a 5-letter word, players will be immersed in the challenge, motivated to improve, and entertained for hours on end.
+
+## Link
+<a href="https://peko-wordle.vercel.app/">Live Demo</a>
+
+
+## Tech
 ![Next JS](https://img.shields.io/badge/Next-black?style=for-the-badge&logo=next.js&logoColor=white)
 ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
